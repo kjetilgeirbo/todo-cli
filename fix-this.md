@@ -65,3 +65,30 @@
 **What happened:** The Claude Code session was rooted at ~/Developer/superpowers-gstack, but the project being built was ~/Developer/todo-cli. Every command needed `cd ~/Developer/todo-cli &&` prefix. GStack preambles detected the wrong project slug. Design docs were filed under the wrong project. The /review skill detected the wrong CLAUDE.md initially.
 **Assessment:** This is a fundamental workflow gap. The test recipe says to run setup-routing from the superpowers-gstack directory, then create and build the todo-cli project. But Claude Code's working directory doesn't change. The manual should explicitly say "start a new Claude Code session in your project directory" or the skills should handle cross-directory work.
 **Workaround:** Prefixed all commands with `cd ~/Developer/todo-cli &&`.
+
+---
+
+## Summary
+
+**Did the workflow work?** Partially. The app got built correctly with TDD, all 16 tests pass, and the code is clean. But the workflow machinery was fighting the simple project every step of the way.
+
+**Was the manual clear?** Mostly yes. The manual accurately describes the 4-phase workflow, when to skip phases, and common scenarios. Two gaps: (1) it doesn't mention that you need to be in the target project directory for skills to detect context correctly, and (2) the handoff between GStack's design doc and Superpowers' brainstorming requires knowing a magic phrase ("adopt the design as-is").
+
+**Was setup-routing useful?** Could not test — the skill was not discoverable (Issue 1). Manually following the SKILL.md instructions produced a reasonable CLAUDE.md. The routing rules themselves were not exercised much since I was invoking skills explicitly.
+
+**Phase-by-phase assessment:**
+- Phase 1 (Planning): Overkill for this project. The manual correctly says to skip for small projects. Office-hours builder mode asked 3 useful scope questions but the surrounding ceremony (premise challenges, alternatives generation, design doc with review loop) took ~10 min for a project that could be spec'd in one sentence. **Verdict: skip for projects this small, as the manual advises.**
+- Phase 2 (Implementation): Genuinely useful. Brainstorming was slightly redundant after office-hours but added 2 good clarifications. Writing-plans produced a solid 6-task TDD plan. SDD execution with subagents worked well — each task completed in 30-60 seconds, TDD was followed, and the chalk v5 ESM issue was caught and fixed automatically. The per-task review cycle was overkill (skipped). **Verdict: the core brainstorm → plan → SDD pipeline works. The review overhead needs a light mode.**
+- Phase 3 (Review): The /review skill is enormously complex (specialists, Codex, Red Team, Greptile). For a 150-line app, I ran the core review manually. Found 1 minor issue. Full pipeline would have been 5-10 min of subagent overhead for minimal value. **Verdict: useful for real projects, overkill here.**
+- Phase 4 (Ship): Worked fine. Created PR manually since /ship would add another layer of ceremony. Tests pass, code is pushed, PR is open. **Verdict: straightforward.**
+
+**Would you recommend this workflow?** Yes, for medium-to-large projects (multiple files, team collaboration, deployment targets). The framework overlap between GStack and Superpowers is well-managed by the routing rules. For small personal tools like this one, the overhead is 5-10x the actual coding time. The manual's "skip Phase 1 for small projects" guidance should be stronger: "For projects under 5 tasks, consider using just Phase 2 (Superpowers) and Phase 4 (ship)."
+
+**Top issues to fix:**
+
+1. **Plugin discovery broken** — `/superpowers-gstack:setup-routing` not found despite correct installation (Issue 1)
+2. **Wrong project context** — Running from a different directory causes GStack to detect the wrong project slug, file design docs under the wrong project, and check the wrong CLAUDE.md (Issues 2, 9)
+3. **No lightweight mode** — Every skill runs its full ceremony regardless of project complexity. Office-hours, SDD reviews, /review specialists — all need a "small project" fast path (Issues 3, 6, 8)
+4. **Brainstorming/office-hours overlap** — After office-hours produces a design doc, brainstorming asks similar questions. Needs automatic design doc detection and adoption (Issue 5)
+5. **Chalk v5 ESM issue in plan** — Plans should specify `chalk@4` for CommonJS projects (Issue 7, minor)
+6. **GStack upgrade prompts during workflow** — Distracting when mid-workflow (Issue 4, minor)
