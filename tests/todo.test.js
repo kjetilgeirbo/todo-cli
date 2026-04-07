@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { loadTodos, saveTodos, addTodo, listTodos } = require('../src/todo');
+const { loadTodos, saveTodos, addTodo, listTodos, markDone, deleteTodo } = require('../src/todo');
 
 function tmpFile() {
   return path.join(os.tmpdir(), `todos-test-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
@@ -55,5 +55,41 @@ describe('listTodos', () => {
     expect(todos[0].text).toBe('One');
     expect(todos[1].text).toBe('Two');
     fs.unlinkSync(fp);
+  });
+});
+
+describe('markDone', () => {
+  test('marks a todo as done', () => {
+    const fp = tmpFile();
+    addTodo(fp, 'Test task');
+    const result = markDone(fp, 1);
+    expect(result.done).toBe(true);
+    const todos = loadTodos(fp);
+    expect(todos[0].done).toBe(true);
+    fs.unlinkSync(fp);
+  });
+
+  test('returns null for nonexistent id', () => {
+    const fp = tmpFile();
+    const result = markDone(fp, 99);
+    expect(result).toBeNull();
+  });
+});
+
+describe('deleteTodo', () => {
+  test('removes a todo by id', () => {
+    const fp = tmpFile();
+    addTodo(fp, 'To delete');
+    const deleted = deleteTodo(fp, 1);
+    expect(deleted.text).toBe('To delete');
+    const todos = loadTodos(fp);
+    expect(todos).toHaveLength(0);
+    fs.unlinkSync(fp);
+  });
+
+  test('returns null for nonexistent id', () => {
+    const fp = tmpFile();
+    const result = deleteTodo(fp, 99);
+    expect(result).toBeNull();
   });
 });

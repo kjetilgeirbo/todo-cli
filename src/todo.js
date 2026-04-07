@@ -31,4 +31,22 @@ function listTodos(filePath) {
   return loadTodos(filePath);
 }
 
-module.exports = { loadTodos, saveTodos, addTodo, listTodos };
+function markDone(filePath, id) {
+  const todos = loadTodos(filePath);
+  const todo = todos.find(t => t.id === id);
+  if (!todo) return null;
+  todo.done = true;
+  saveTodos(filePath, todos);
+  return todo;
+}
+
+function deleteTodo(filePath, id) {
+  const todos = loadTodos(filePath);
+  const index = todos.findIndex(t => t.id === id);
+  if (index === -1) return null;
+  const [deleted] = todos.splice(index, 1);
+  saveTodos(filePath, todos);
+  return deleted;
+}
+
+module.exports = { loadTodos, saveTodos, addTodo, listTodos, markDone, deleteTodo };
